@@ -26,7 +26,8 @@ let webpackConfig = {
   mode: 'development',
   entry: [
     entryFile,
-    'webpack-dev-server/client?http://localhost:' + port + '/'
+    path.resolve(__dirname, 'node_modules', 'webpack-dev-server') +
+      '/client?http://localhost:' + port + '/'
   ],
   output: {
     path: path.dirname(entryFile),
