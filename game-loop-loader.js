@@ -16,7 +16,7 @@ Object.assign(__runp5, {
   frame: function() { return __runp5.tick; },
   runp5: function(game) {
     game.setup = function() {
-      game.createCanvas(640, 480);
+      game.createCanvas(960, 720);
     };
     game.draw = __runp5.moveToNextTick;
     window.game = game;
