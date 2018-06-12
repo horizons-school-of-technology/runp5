@@ -13,19 +13,19 @@ Object.assign(__runp5, {
     });
     resolve();
   },
-  drawFrame: function() { return __runp5.tick; },
+  frame: function() { return __runp5.tick; },
   runp5: function(game) {
     game.setup = function() {
       game.createCanvas(640, 480);
     };
     game.draw = __runp5.moveToNextTick;
     window.game = game;
-    __runp5.main(__runp5.drawFrame);
+    __runp5.main(__runp5.frame);
   }
 });
 
-__runp5.main = async function(drawFrame) {
-await drawFrame();
+__runp5.main = async function(frame) {
+await frame();
 `;
 
 let postfix = `
