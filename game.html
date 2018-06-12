@@ -29,23 +29,27 @@
     </style>
     <script>
       (function() {
-        window.addEventListener("resize", resizeThrottler, false);
-
-        var resizeTimeout;
-        function resizeThrottler() {
-          if ( !resizeTimeout ) {
+        function scaleCanvasToFit() {
+          var canvas = document.querySelector('canvas');
+          var scale = Math.min(
+            window.innerWidth / 960,
+            window.innerHeight / 720
+          );
+          if (scale > 1 && scale < 1.5) {
+            scale = 1;
+          }
+          canvas.style.transform = 'translate(-50%, -50%) scale(' + scale + ')';
+        }
+        var resizeTimeout = null;
+        window.addEventListener('resize', function() {
+          if (!resizeTimeout) {
             resizeTimeout = setTimeout(function() {
               resizeTimeout = null;
-              var canvas = document.querySelector('canvas');
-              var scale = Math.min(
-                window.innerWidth / 960,
-                window.innerHeight / 720,
-                1
-              );
-              canvas.style.transform = 'translate(-50%, -50%) scale(' + scale + ')';
+              scaleCanvasToFit();
             }, 100); // 10 fps resizes
           }
-        }
+        }, false);
+        window.addEventListener('load', scaleCanvasToFit, false);
       })();
     </script>
   </head>
