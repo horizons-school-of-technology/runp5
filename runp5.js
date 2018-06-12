@@ -1,7 +1,6 @@
 let path = require('path');
-let express = require("express");
-let webpackDevMiddleware = require("webpack-dev-middleware");
-let webpack = require("webpack");
+let WebpackDevServer = require("webpack-dev-server");
+let Webpack = require("webpack");
 let cli = require('commander');
 
 let packagejson = require('./package.json');
@@ -18,14 +17,17 @@ if (!isBuild && cli.args.length !== 1) {
   process.exit(1);
 }
 
+let port = 3000;
+
 let entryFile = path.resolve(cli.args[0]);
 // TODO: test for entryFile existence here
 
-let app = express();
-
 let webpackConfig = {
   mode: 'development',
-  entry: entryFile,
+  entry: [
+    entryFile,
+    'webpack-dev-server/client?http://localhost:' + port + '/'
+  ],
   output: {
     path: path.dirname(entryFile),
     filename: 'bundle.js',
@@ -39,30 +41,25 @@ let webpackConfig = {
     }],
   },
   devtool: 'source-map',
+  watch: true,
+  devServer: {
+    contentBase: __dirname,
+  },
 };
 
-let webpackCompiler = webpack(webpackConfig);
+let webpackCompiler = Webpack(webpackConfig);
 
 if (isBuild) {
+  // TODO(aria): Make this less hacky
   webpackCompiler.run(function() {
     console.log('compiled');
     process.exit(0);
   });
 } else {
 
-let devServerConfig = {
+  let server = new WebpackDevServer(webpackCompiler, webpackConfig.devServer);
 
-};
-
-app.get('/', function(req, res, next) {
-  res.sendFile(path.resolve(__dirname, 'game.html'));
-});
-
-app.get('/p5.js', function(req, res, next) {
-  res.sendFile(path.resolve(__dirname, 'p5.js'));
-});
-
-app.use(webpackDevMiddleware(webpackCompiler, devServerConfig));
-
-app.listen(3000);
+  server.listen(port, '127.0.0.1', function() {
+    console.log('Starting server on http://localhost:' + port);
+  });
 }

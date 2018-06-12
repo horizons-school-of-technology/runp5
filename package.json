@@ -1,6 +1,6 @@
 {
   "name": "runp5",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "unit 0 p5 environment runner",
   "main": "runp5.js",
   "bin": "runp5",
@@ -19,10 +19,9 @@
   "homepage": "https://github.com/horizons-school-of-technology/runp5#readme",
   "dependencies": {
     "commander": "^2.15.1",
-    "express": "^4.16.3",
     "source-map": "^0.7.3",
     "webpack": "^4.12.0",
-    "webpack-dev-middleware": "^3.1.3"
+    "webpack-dev-server": "^3.1.4"
   },
   "devDependencies": {
     "nodemon": "^1.17.5"
