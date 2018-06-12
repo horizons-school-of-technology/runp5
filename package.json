@@ -1,9 +1,9 @@
 {
   "name": "runp5",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "unit 0 p5 environment runner",
   "main": "runp5.js",
-  "bin": "runp5.js",
+  "bin": "runp5",
   "scripts": {
     "start": "nodemon runp5.js test/sketch.js"
   },
