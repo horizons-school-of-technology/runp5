@@ -34,7 +34,7 @@ let webpackConfig = {
     rules: [{
       resource: entryFile,
       use: [
-        './game-loop-loader.js'
+        path.resolve(__dirname, 'game-loop-loader.js'),
       ],
     }],
   },
