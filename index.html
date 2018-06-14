@@ -5,6 +5,7 @@
     <title>P5 Game Env</title>
     <script src="/p5.js"></script>
     <script src="/bundle.js"></script>
+    <script src="/gif.js"></script>
     <style>
       html, body {
         width: 100%;
@@ -50,6 +51,27 @@
           }
         }, false);
         window.addEventListener('load', scaleCanvasToFit, false);
+
+        var _gif;
+        var _canvas;
+        var _rendering = false;
+        window.gif = {
+          start: function() {
+            _gif = new GIF({ workers: 2, quality: 10 });
+            _gif.on('finished', function(blob) {
+              window.open(URL.createObjectURL(blob));
+            });
+          },
+          addFrame: function() {
+            _canvas = _canvas || document.querySelector('canvas');
+            _gif.addFrame(_canvas, { copy: true, delay: 17 });
+          },
+          finish: function() {
+            if (_rendering) { return; }
+            _rendering = true;
+            _gif.render();
+          }
+        };
       })();
     </script>
   </head>
