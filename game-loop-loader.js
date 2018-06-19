@@ -13,19 +13,20 @@ Object.assign(__runp5, {
     });
     resolve();
   },
-  frame: function() { return __runp5.tick; },
+  nextFrame: function() { return __runp5.tick; },
   runp5: function(game) {
     game.setup = function() {
       game.createCanvas(960, 720);
     };
     game.draw = __runp5.moveToNextTick;
     window.game = game;
-    __runp5.main(__runp5.frame);
+    __runp5.main(__runp5.nextFrame);
   }
 });
 
 __runp5.main = async function(frame) {
-await frame();
+const nextFrame = frame;
+await nextFrame();
 `;
 
 let postfix = `
@@ -46,9 +47,34 @@ module.exports = function(source, map) {
   //return prefix + source + postfix;
 
   let node = new sourceMap.SourceNode(1, 0, this.resourcePath, source);
-  node.setSourceContent(this.resourcePath, source);
-  node.prepend(prefix);
-  node.add(postfix);
-  let result = node.toStringWithSourceMap();
-  this.callback(null, result.code, JSON.parse(result.map.toString()));
+  let sourceMapGenerator = new sourceMap.SourceMapGenerator({
+    file: this.resourcePath,
+    sourceRoot: '',
+  });
+  sourceMapGenerator.setSourceContent(this.resourcePath, source);
+  let prefixLineCount = prefix.split(/\r?\n/g).length;
+
+  let result = prefix;
+  source.split(/\r?\n/g).forEach((line, lineNumber) => {
+    let sourceCol = 0;
+    let resultCol = 0;
+    (line.match(/\w+|\W+/g) || []).forEach((token) => {
+      let resultToken = (token === 'awaitNextFrame') ? 'await nextFrame' : token;
+
+      sourceMapGenerator.addMapping({
+        source: this.resourcePath,
+        original: { line: lineNumber + 1, column: sourceCol },
+        generated: { line: prefixLineCount + lineNumber, column: resultCol }
+      });
+
+      result += resultToken;
+      sourceCol = sourceCol + token.length;
+      resultCol = resultCol + resultToken.length;
+    });
+    result += '\n';
+  });
+
+  result += postfix;
+  let resultMap = JSON.parse(sourceMapGenerator.toString())
+  this.callback(null, result, resultMap);
 };

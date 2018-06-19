@@ -9,5 +9,5 @@ while (true) {
   game.ellipse(x, 50, 80, 80);
   x++;
 
-  await frame();
+  awaitNextFrame();
 }
