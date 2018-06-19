@@ -1,7 +1,9 @@
 let sourceMap = require('source-map');
 
 let prefix = `
-let __runp5 = {};
+let __runp5 = {
+  goToNextFrame: function() { return __runp5.tick; },
+};
 Object.assign(__runp5, {
   tick: new Promise((resolve, reject) => {
     __runp5.tickResolve = resolve;
@@ -11,10 +13,11 @@ Object.assign(__runp5, {
     __runp5.tick = new Promise((resolve, reject) => {
       __runp5.tickResolve = resolve;
     });
-    resolve();
+    // resolve to true so it can be used in a while loop
+    resolve(true);
   },
-  nextFrame: function() { return __runp5.tick; },
   runp5: function(game) {
+    game.goToNextFrame = __runp5.goToNextFrame,
     game.setup = function() {
       game.createCanvas(960, 720);
     };
@@ -25,8 +28,7 @@ Object.assign(__runp5, {
 });
 
 __runp5.main = async function(frame) {
-const nextFrame = frame;
-await nextFrame();
+await __runp5.goToNextFrame();
 `;
 
 let postfix = `
@@ -58,8 +60,12 @@ module.exports = function(source, map) {
   source.split(/\r?\n/g).forEach((line, lineNumber) => {
     let sourceCol = 0;
     let resultCol = 0;
-    (line.match(/\w+|\W+/g) || []).forEach((token) => {
-      let resultToken = (token === 'awaitNextFrame') ? 'await nextFrame' : token;
+    (line.match(/game\.goToNextFrame\b|\w+|\W+/g) || []).forEach((token) => {
+      let resultToken = token;
+      if (token === 'game.goToNextFrame') {
+        result += 'await ';
+        resultCol += 'await '.length;
+      }
 
       sourceMapGenerator.addMapping({
         source: this.resourcePath,
@@ -68,8 +74,8 @@ module.exports = function(source, map) {
       });
 
       result += resultToken;
-      sourceCol = sourceCol + token.length;
-      resultCol = resultCol + resultToken.length;
+      sourceCol += token.length;
+      resultCol += resultToken.length;
     });
     result += '\n';
   });
