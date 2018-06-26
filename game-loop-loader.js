@@ -1,5 +1,6 @@
-let sourceMap = require('source-map');
+let SourceMap = require('source-map');
 
+// Create a prefix of code to prepend to the game:
 let prefix = `
 let __runp5 = {
   goToNextFrame: function() { return __runp5.tick; },
@@ -20,6 +21,7 @@ Object.assign(__runp5, {
     game.goToNextFrame = __runp5.goToNextFrame,
     game.setup = function() {
       game.createCanvas(960, 720);
+      game.background(255, 255, 255);
     };
     game.draw = __runp5.moveToNextTick;
     window.game = game;
@@ -38,18 +40,8 @@ new p5(__runp5.runp5);
 
 
 module.exports = function(source, map) {
-  //let asyncSource = source.replaceAll(`
-  //const node = new sourceMap.SourceNode(0, 0, this.resourcePath,
-  console.log("TEST", source, map, this.sourceMap);
-  /*let node = sourceMap.SourceNode.fromStringWithSourceMap(source, map);
-  node.prepend(prefix);
-  node.add(postfix);
-  let result = node.toStringWithSourceMap();
-  return [result.code, result.map];*/
-  //return prefix + source + postfix;
-
-  let node = new sourceMap.SourceNode(1, 0, this.resourcePath, source);
-  let sourceMapGenerator = new sourceMap.SourceMapGenerator({
+  // Create a new sourcemap
+  let sourceMapGenerator = new SourceMap.SourceMapGenerator({
     file: this.resourcePath,
     sourceRoot: '',
   });
