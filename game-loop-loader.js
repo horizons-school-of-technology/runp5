@@ -21,7 +21,7 @@ Object.assign(__runp5, {
     game.goToNextFrame = __runp5.goToNextFrame,
     game.setup = function() {
       game.createCanvas(960, 720);
-      game.background(255, 255, 255);
+      game.background(200, 200, 200);
     };
     game.draw = __runp5.moveToNextTick;
     window.game = game;
