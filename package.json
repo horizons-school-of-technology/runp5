@@ -1,6 +1,6 @@
 {
   "name": "runp5",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "description": "Horizons unit 0 p5 environment runner",
   "main": "runp5.js",
   "bin": "runp5",

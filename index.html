@@ -55,17 +55,20 @@
         var _gif;
         var _canvas;
         var _rendering = false;
+        var _framecount = 0;
         window.gif = {
           start: function() {
-            _gif = new GIF({ workers: 2, quality: 10 });
+            _gif = new GIF({ workers: 4, quality: 4 });
             _gif.on('finished', function(blob) {
               window.open(URL.createObjectURL(blob));
             });
           },
           addFrame: function() {
             if (_rendering) { return; }
+            _framecount++;
+            if (_framecount % 2 !== 0) { return; }
             _canvas = _canvas || document.querySelector('canvas');
-            _gif.addFrame(_canvas, { copy: true, delay: 17 });
+            _gif.addFrame(_canvas, { copy: true, delay: Math.round(1000 / 60 * 2) });
           },
           finish: function() {
             if (_rendering) { return; }
