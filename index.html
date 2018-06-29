@@ -63,6 +63,7 @@
             });
           },
           addFrame: function() {
+            if (_rendering) { return; }
             _canvas = _canvas || document.querySelector('canvas');
             _gif.addFrame(_canvas, { copy: true, delay: 17 });
           },
