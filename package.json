@@ -5,7 +5,7 @@
   "main": "runp5.js",
   "bin": "runp5",
   "scripts": {
-    "start": "nodemon runp5.js test/sketch.js"
+    "start": "node runp5.js test/sketch.js"
   },
   "repository": {
     "type": "git",
@@ -18,6 +18,9 @@
   },
   "homepage": "https://github.com/horizons-school-of-technology/runp5#readme",
   "dependencies": {
+    "babel-core": "^6.26.3",
+    "babel-loader": "^7.1.4",
+    "babel-plugin-transform-strict-mode": "^6.24.1",
     "commander": "^2.15.1",
     "source-map": "^0.7.3",
     "webpack": "^4.12.0",

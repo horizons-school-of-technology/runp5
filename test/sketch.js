@@ -3,6 +3,8 @@ let y = 50;
 
 while (game.goToNextFrame()) {
 
+  console.log(true && x < 5);
+
   game.background(0);
   game.fill(255);
   game.rect(x,y,50,50);

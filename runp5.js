@@ -34,12 +34,27 @@ let webpackConfig = {
     filename: 'bundle.js',
   },
   module: {
-    rules: [{
-      resource: entryFile,
-      use: [
-        path.resolve(__dirname, 'game-loop-loader.js'),
-      ],
-    }],
+    rules: [
+      {
+        test: /\.js$/,
+        exclude: /(node_modules|bower_components)/,
+        use: {
+          loader: path.resolve(__dirname, 'node_modules', 'babel-loader'),
+          options: {
+            plugins: [
+              path.resolve(__dirname, 'node_modules', 'babel-plugin-transform-strict-mode'),
+              path.resolve(__dirname, 'simplejs-babel-plugin.js'),
+            ],
+          }
+        },
+      },
+      {
+        resource: entryFile,
+        use: [
+          path.resolve(__dirname, 'game-loop-loader.js'),
+        ],
+      }
+    ],
   },
   devtool: 'source-map',
   watch: true,
