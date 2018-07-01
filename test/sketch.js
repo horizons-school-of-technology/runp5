@@ -3,7 +3,9 @@ let y = 50;
 
 while (game.goToNextFrame()) {
 
-  console.log(true && x < 5);
+  if (x > 100) {
+    console.log(x < 5 || true);
+  }
 
   game.background(0);
   game.fill(255);
