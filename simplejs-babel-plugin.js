@@ -21,70 +21,6 @@ module.exports = function({ types: t }) {
     return condition;
   };
 
-  const assertTypes = function(typeAssertions, message) {
-    let condition = null;
-    for (typeAssertion of typeAssertions) {
-      const newAssertion = t.binaryExpression(
-        '!==',
-        t.unaryExpression('typeof', t.identifier(typeAssertion.identifier)),
-        t.stringLiteral(typeAssertion.type)
-      );
-      if (condition == null) {
-        condition = newAssertion;
-      } else {
-        condition = t.logicalExpression(
-          '||',
-          condition,
-          newAssertion
-        );
-      }
-    }
-
-    return t.ifStatement(
-      condition,
-      t.throwStatement(
-        t.newExpression(t.identifier("TypeError"), [
-          t.stringLiteral(message)
-        ])
-      )
-    );
-  };
-
-  const paramNamesForOperator = [
-    [],
-    ['operand'],
-    ['left', 'right'],
-    ['first', 'second', 'third']
-  ];
-
-  const typeAssertionIife = function(params, type, message, genNode) {
-    var names = paramNamesForOperator[params.length];
-    if (names == null) {
-      throw new Error('Attempted to use typeAssertionIife with <1 or >3 args');
-    }
-
-    return t.callExpression(
-      t.functionExpression(
-        null, // name
-        names.map(name => t.identifier(name)), // params
-        t.blockStatement([
-          assertTypes(
-            names.map(name => ({ identifier: name, type: type })),
-            message
-          ),
-          t.returnStatement(
-
-            t.logicalExpression(
-              path.node.operator,
-              t.identifier('left'),
-              t.identifier('right')
-            )
-          )
-        ])
-      ),
-      params
-    );
-  };
 
   const genIife = (paramIdentifiers, paramValues, resultNode, errorCondition, message) => {
     return t.callExpression(
@@ -108,7 +44,7 @@ module.exports = function({ types: t }) {
   };
 
   const checkedTypeOfOperands = (node, operands, type, message) => {
-    const names = paramNamesForOperator[operands.length];
+    const names = operands.map(op => '_' + op + '_');
 
     if (t.isStatement(node)) {
       const outerStatement = t.clone(node);
