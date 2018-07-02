@@ -200,7 +200,6 @@ module.exports = function({ types: t }) {
 
   const visitOneIdentifierNode = function(path) {
     if (t.isReferenced(path.node, path.parent)) {
-      if (path.node.name === 'x') { debugger; }
       this.identifiers.push(path.node);
     }
   };
@@ -286,6 +285,74 @@ module.exports = function({ types: t }) {
           );
           path.skip();
         }
+      }
+    },
+
+    VariableDeclaration: {
+      enter(path, state) {
+        if (t.isVar(path.node)) {
+          path.replaceWith(t.inherits(
+            t.throwStatement(
+              t.newExpression(t.identifier("SyntaxError"), [
+                t.stringLiteral(
+                  'Sorry, `var` is not supported in this mode, ' +
+                  'please use `let` to declare variables'
+                )
+              ])
+            ),
+            path.node
+          ));
+          path.skip();
+
+        } else if (path.node.declarations.length !== 1) {
+          path.replaceWith(t.inherits(
+            t.throwStatement(
+              t.newExpression(t.identifier("SyntaxError"), [
+                t.stringLiteral(
+                  'Sorry, declaring multiple variables separated by `,` is not ' +
+                  'supported in this mode, ' +
+                  'please declare each variable on its own line, ending with a `;`'
+                )
+              ])
+            ),
+            path.node
+          ));
+          path.skip();
+        }
+      }
+    },
+
+    FunctionDeclaration: {
+      enter(path, state) {
+        const fname = path.node.id.name;
+        path.replaceWith(t.inherits(
+          t.throwStatement(
+            t.newExpression(t.identifier("SyntaxError"), [
+              t.stringLiteral(
+                'Please use `let ' + fname + ' = function()` ' +
+                'instead of `function ' + fname + '()`'
+              )
+            ])
+          ),
+          path.node
+        ));
+        path.skip();
+      }
+    },
+
+    SequenceExpression: {
+      enter(path, state) {
+        path.replaceWith(t.inherits(
+          t.throwStatement(
+            t.newExpression(t.identifier("SyntaxError"), [
+              t.stringLiteral(
+                'Sorry, `,` may only be used for functions and arrays, you might have meant a `;`?'
+              )
+            ])
+          ),
+          path.node
+        ));
+        path.skip();
       }
     },
   };

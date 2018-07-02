@@ -18,7 +18,7 @@ Object.assign(__runp5, {
     resolve(true);
   },
   runp5: function(game) {
-    game.goToNextFrame = __runp5.goToNextFrame,
+    game.goToNextFrame = __runp5.goToNextFrame;
     game.setup = function() {
       game.createCanvas(960, 720);
       game.background(200, 200, 200);
