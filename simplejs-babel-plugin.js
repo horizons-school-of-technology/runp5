@@ -1,13 +1,25 @@
 module.exports = function({ types: t }) {
 
+  const typeCheck = (identifier, type) => {
+    if (type === 'number|string') {
+      return t.logicalExpression(
+        '&&',
+        t.binaryExpression('!==', t.unaryExpression('typeof', identifier), t.stringLiteral('number')),
+        t.binaryExpression('!==', t.unaryExpression('typeof', identifier), t.stringLiteral('string'))
+      );
+    } else {
+      return t.binaryExpression(
+        '!==',
+        t.unaryExpression('typeof', identifier),
+        t.stringLiteral(type)
+      );
+    }
+  };
+
   const wrongTypeCondition = (identifiers, type) => {
     let condition = null;
     for (id of identifiers) {
-      const newAssertion = t.binaryExpression(
-        '!==',
-        t.unaryExpression('typeof', id),
-        t.stringLiteral(type)
-      );
+      const newAssertion = typeCheck(id, type);
       if (condition == null) {
         condition = newAssertion;
       } else {
@@ -81,6 +93,21 @@ module.exports = function({ types: t }) {
 
   };
 
+  const getPrintableType = (type, isPlural) => {
+    if (type === 'boolean') {
+      return isPlural ?
+        'booleans (true or false)' :
+        'a boolean (true or false)';
+    } else if (type === 'null' || type === 'undefined') {
+      return 'undefined (or null)';
+    } else if (type === 'number|string') {
+      return 'a number or string';
+    } else if (type === 'same') {
+      return 'the same type';
+    }
+    return isPlural ? type + 's' : 'a ' + type;
+  }
+
   const visitor = {
     Program(path, state) {
       console.log('PROGRAM', JSON.stringify(state.file.ast, null, 4));
@@ -121,6 +148,36 @@ module.exports = function({ types: t }) {
         // since this is on exit, we don't have to traverse this again
         // this also avoids infinitely recursing on the new logicalExpression
         path.skip();
+      }
+    },
+
+    BinaryExpression: {
+      exit(path, state) {
+        const op = path.node.operator;
+
+        let type = null;
+
+        if (op === '+') {
+          type = 'number|string';
+        } else if (op === '==' || op === '!=') {
+
+        } else if (t.NUMBER_BINARY_OPERATORS.indexOf(op) !== -1) {
+          type = 'number';
+        } else if (t.BOOLEAN_NUMBER_BINARY_OPERATORS.indexOf(op) !== -1) {
+          type = 'number|string';
+        }
+
+        if (type) {
+          path.replaceWith(
+            checkedTypeOfOperands(
+              path.node,
+              ['left', 'right'],
+              type,
+              'Both sides of ' + op + ' should be ' + getPrintableType(type, true) + '.'
+            )
+          );
+          path.skip();
+        }
       }
     },
   };
