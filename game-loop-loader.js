@@ -25,7 +25,7 @@ Object.assign(__runp5, {
     };
     game.draw = __runp5.moveToNextTick;
     window.game = game;
-    __runp5.main(__runp5.nextFrame);
+    __runp5.main(__runp5.goToNextFrame);
   }
 });
 
