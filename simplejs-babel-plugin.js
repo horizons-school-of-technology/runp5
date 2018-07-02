@@ -90,8 +90,37 @@ module.exports = function({ types: t }) {
         message
       );
     }
-
   };
+
+
+  const _intentedOperatorSuggestion = {
+    '|': '||',
+    '&': '&&',
+    '^': '**',
+    '~': '!',
+  };
+
+  const illegalOperandException = (operator) => {
+    const intendedOpSuggestion = _intentedOperatorSuggestion[operator];
+    return t.callExpression(
+      t.functionExpression(
+        null, // name
+        [], // args
+        t.blockStatement([
+          t.throwStatement(
+            t.newExpression(t.identifier("SyntaxError"), [
+              t.stringLiteral(
+                'The ' + operator + ' operator not supported in this mode' +
+                (intendedOpSuggestion ? '; maybe you meant ' + intendedOpSuggestion : '')
+              )
+            ])
+          )
+        ])
+      ),
+      [] // parameter values
+    );
+  }
+
 
   const getPrintableType = (type, isPlural) => {
     if (type === 'boolean') {
@@ -161,10 +190,18 @@ module.exports = function({ types: t }) {
           type = 'number|string';
         } else if (op === '==' || op === '!=') {
 
+        } else if (['&', '|', '^', '<<', '>>', '>>>'].indexOf(op) !== -1) {
+          type = 'illegal';
         } else if (t.NUMBER_BINARY_OPERATORS.indexOf(op) !== -1) {
           type = 'number';
         } else if (t.BOOLEAN_NUMBER_BINARY_OPERATORS.indexOf(op) !== -1) {
           type = 'number|string';
+        }
+
+        if (type === 'illegal') {
+          path.replaceWith(illegalOperandException(op));
+          path.skip();
+          return;
         }
 
         if (type) {
