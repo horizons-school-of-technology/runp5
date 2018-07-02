@@ -72,6 +72,19 @@ module.exports = function({ types: t }) {
   }
 
   const genIife = (paramIdentifiers, paramValues, resultNode, errorCondition, message) => {
+    // look up all identifiers used in the param values so that we can
+    // reference them inside the function, and thus have access to them
+    // inside the chrome debugger :/
+    const paramState = { identifiers: [] };
+    paramValues.forEach(p => {
+      if (t.isIdentifier(p.node)) {
+        // p.traverse doesn't check the `p` node itself, so we do both here:
+        visitOneIdentifierNode.call(paramState, p);
+      }
+      p.traverse(getIdentifiersVisitor, paramState)
+    });
+    const usedIdentifiers = paramState.identifiers.map(id => t.clone(id));
+
     return t.callExpression(
       t.functionExpression(
         null, // name
@@ -79,20 +92,27 @@ module.exports = function({ types: t }) {
         t.blockStatement([
           t.ifStatement(
             errorCondition,
-            t.throwStatement(
-              t.newExpression(t.identifier("TypeError"), [
-                t.stringLiteral(message)
-              ])
-            )
+            t.blockStatement([
+              t.throwStatement(
+                t.newExpression(t.identifier("TypeError"), [
+                  t.stringLiteral(message)
+                ])
+              ),
+              // Generate a useless statement containing the parameter expressions
+              // so that all those variables are accessible in the debugger inside
+              // the iife :/
+              t.returnStatement(t.arrayExpression(usedIdentifiers))
+            ])
           ),
           t.returnStatement(resultNode)
         ])
       ),
-      paramValues
+      paramValues.map(p => p.node)
     );
   };
 
-  const checkedTypeOfOperands = (node, operands, type, message) => {
+  const checkedTypeOfOperands = (path, operands, type, message) => {
+    const node = path.node;
     const names = operands.map(op => '_' + op + '_');
 
     if (t.isStatement(node)) {
@@ -101,7 +121,7 @@ module.exports = function({ types: t }) {
         const name = names[i];
         outerStatement[op] = genIife(
           [t.identifier(name)],
-          [node[op]],
+          [path.get(op)],
           t.identifier(name),
           t.binaryExpression(
             '!==',
@@ -121,7 +141,7 @@ module.exports = function({ types: t }) {
 
       return genIife(
         names.map(name => t.identifier(name)),
-        operands.map(op => node[op]),
+        operands.map(op => path.get(op)),
         innerOp,
         wrongTypeCondition(names.map(name => t.identifier(name)), type),
         message
@@ -178,6 +198,16 @@ module.exports = function({ types: t }) {
     return isPlural ? type + 's' : 'a ' + type;
   }
 
+  const visitOneIdentifierNode = function(path) {
+    if (t.isReferenced(path.node, path.parent)) {
+      if (path.node.name === 'x') { debugger; }
+      this.identifiers.push(path.node);
+    }
+  };
+  const getIdentifiersVisitor = {
+    Identifier: visitOneIdentifierNode,
+  };
+
   const visitor = {
     Program(path, state) {
       console.log('PROGRAM', JSON.stringify(state.file.ast, null, 4));
@@ -186,7 +216,7 @@ module.exports = function({ types: t }) {
     IfStatement: {
       exit(path, state) {
         path.replaceWith(
-          checkedTypeOfOperands(path.node, ['test'], 'boolean', 'If condition should be a boolean')
+          checkedTypeOfOperands(path, ['test'], 'boolean', 'If condition should be a boolean')
         );
         path.skip();
       }
@@ -195,7 +225,7 @@ module.exports = function({ types: t }) {
     WhileStatement: {
       exit(path, state) {
         path.replaceWith(
-          checkedTypeOfOperands(path.node, ['test'], 'boolean', 'While loop condition should be a boolean')
+          checkedTypeOfOperands(path, ['test'], 'boolean', 'While loop condition should be a boolean')
         );
         path.skip();
       }
@@ -209,7 +239,7 @@ module.exports = function({ types: t }) {
 
         path.replaceWith(
           checkedTypeOfOperands(
-            path.node,
+            path,
             ['left', 'right'],
             'boolean',
             'Both sides of ' + path.node.operator + ' should be booleans (true or false). '
@@ -248,7 +278,7 @@ module.exports = function({ types: t }) {
         if (type) {
           path.replaceWith(
             checkedTypeOfOperands(
-              path.node,
+              path,
               ['left', 'right'],
               type,
               'Both sides of ' + op + ' should be ' + getPrintableType(type, true) + '.'

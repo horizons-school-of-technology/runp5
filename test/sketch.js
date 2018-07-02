@@ -3,7 +3,7 @@ let y = 50;
 
 while (game.goToNextFrame()) {
 
-  if (x < '5') {
+  if (x) {
     console.log(x < 5 || true);
   }
 
