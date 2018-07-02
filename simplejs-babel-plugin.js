@@ -1,11 +1,21 @@
 module.exports = function({ types: t }) {
 
-  const typeCheck = (identifier, type) => {
-    if (type === 'number|string') {
-      return t.logicalExpression(
-        '&&',
-        t.binaryExpression('!==', t.unaryExpression('typeof', identifier), t.stringLiteral('number')),
-        t.binaryExpression('!==', t.unaryExpression('typeof', identifier), t.stringLiteral('string'))
+  const typeCheck = (identifier, type, prevIdentifier) => {
+    if (type === 'same') {
+      if (prevIdentifier == null) {
+        return null;
+      } else {
+        return t.binaryExpression(
+          '!==',
+          t.unaryExpression('typeof', identifier),
+          t.unaryExpression('typeof', prevIdentifier)
+        );
+      }
+    } else if (type === 'null') {
+      return t.binaryExpression(
+        '!=',
+        identifier,
+        t.nullLiteral()
       );
     } else {
       return t.binaryExpression(
@@ -16,23 +26,50 @@ module.exports = function({ types: t }) {
     }
   };
 
-  const wrongTypeCondition = (identifiers, type) => {
+  const wrongSingleTypeCondition = (identifiers, type, onlyRequireOne) => {
     let condition = null;
+    let prevId = null;
     for (id of identifiers) {
-      const newAssertion = typeCheck(id, type);
+      const newAssertion = typeCheck(id, type, prevId);
+
       if (condition == null) {
         condition = newAssertion;
       } else {
         condition = t.logicalExpression(
-          '||',
+          onlyRequireOne ? '&&' : '||',
           condition,
           newAssertion
         );
       }
+
+      prevId = id;
     }
     return condition;
   };
 
+  const wrongTypeCondition = (identifiers, type) => {
+    if (type === 'plusable') {
+      return t.LogicalExpression(
+        '&&',
+        wrongSingleTypeCondition(identifiers, 'number', false),
+        wrongSingleTypeCondition(identifiers, 'string', true)
+      );
+    } else if (type === 'comparable') {
+      return t.LogicalExpression(
+        '&&',
+        wrongSingleTypeCondition(identifiers, 'same', false),
+        wrongSingleTypeCondition(identifiers, 'null', true)
+      );
+    } else if (type === 'number|string') {
+      return t.LogicalExpression(
+        '&&',
+        wrongSingleTypeCondition(identifiers, 'number', false),
+        wrongSingleTypeCondition(identifiers, 'string', false)
+      );
+    } else {
+      return wrongSingleTypeCondition(identifiers, type, false)
+    }
+  }
 
   const genIife = (paramIdentifiers, paramValues, resultNode, errorCondition, message) => {
     return t.callExpression(
@@ -129,10 +166,14 @@ module.exports = function({ types: t }) {
         'a boolean (true or false)';
     } else if (type === 'null' || type === 'undefined') {
       return 'undefined (or null)';
-    } else if (type === 'number|string') {
-      return 'a number or string';
+    } else if (type === 'plusable') {
+      return isPlural ? 'numbers or strings' : 'a number or string';
+    } else if (type === 'comparable') {
+      return 'the same type or undefined';
     } else if (type === 'same') {
       return 'the same type';
+    } else if (type === 'number|string') {
+      return isPlural ? 'either numbers or strings' : 'a number or string';
     }
     return isPlural ? type + 's' : 'a ' + type;
   }
@@ -187,9 +228,9 @@ module.exports = function({ types: t }) {
         let type = null;
 
         if (op === '+') {
-          type = 'number|string';
+          type = 'plusable';
         } else if (op === '==' || op === '!=') {
-
+          type = 'comparable';
         } else if (['&', '|', '^', '<<', '>>', '>>>'].indexOf(op) !== -1) {
           type = 'illegal';
         } else if (t.NUMBER_BINARY_OPERATORS.indexOf(op) !== -1) {
