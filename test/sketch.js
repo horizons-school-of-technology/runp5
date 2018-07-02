@@ -15,5 +15,7 @@ while (game.goToNextFrame()) {
   game.fill(255);
   game.rect(x,y,50,50);
   game.ellipse(x, 50, 80, 80);
-  x++, y++;
+  x++; y++;
+
+  x = void 0;
 }

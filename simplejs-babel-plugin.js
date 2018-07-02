@@ -250,6 +250,24 @@ module.exports = function({ types: t }) {
       }
     },
 
+    UnaryExpression: {
+      enter(path, state) {
+        if (path.node.operator === 'void') {
+          path.replaceWith(t.inherits(
+            // babel auto-creates the iife around this throw statement
+            t.throwStatement(
+              t.newExpression(t.identifier("SyntaxError"), [
+                t.stringLiteral(
+                  'Sorry, `void` is not supported in this mode, maybe you meant `undefined`'
+                )
+              ])
+            ),
+            path.node
+          ));
+        }
+      }
+    },
+
     BinaryExpression: {
       exit(path, state) {
         const op = path.node.operator;
@@ -347,6 +365,22 @@ module.exports = function({ types: t }) {
             t.newExpression(t.identifier("SyntaxError"), [
               t.stringLiteral(
                 'Sorry, `,` may only be used for functions and arrays, you might have meant a `;`?'
+              )
+            ])
+          ),
+          path.node
+        ));
+        path.skip();
+      }
+    },
+
+    LabeledStatement: {
+      enter(path, state) {
+        path.replaceWith(t.inherits(
+          t.throwStatement(
+            t.newExpression(t.identifier("SyntaxError"), [
+              t.stringLiteral(
+                'Sorry, `:` may only be used to create objects, but this `:` is inside normal code 😬'
               )
             ])
           ),
