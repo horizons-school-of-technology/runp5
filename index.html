@@ -56,10 +56,14 @@
         var _canvas;
         var _rendering = false;
         var _framecount = 0;
-        window.gif = {
+        var gif = window.gif = {
+          showAlert: true,
           start: function() {
             _gif = new GIF({ workers: 4, quality: 4 });
             _gif.on('finished', function(blob) {
+              if (gif.showAlert) {
+                alert('Finished rendering gif; opening new window...');
+              }
               window.open(URL.createObjectURL(blob));
             });
           },
@@ -73,6 +77,9 @@
           finish: function() {
             if (_rendering) { return; }
             _rendering = true;
+            if (gif.showAlert) {
+              alert('Rendering gif');
+            }
             _gif.render();
           }
         };
