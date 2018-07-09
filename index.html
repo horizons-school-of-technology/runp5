@@ -30,6 +30,14 @@
     </style>
     <script>
       (function() {
+        window.addEventListener('error', function(e) {
+          alert(
+            'Error in ' + e.filename + ' on line ' + e.lineno + ':\n\n' +
+            'Please open your console to see more information\n\n' +
+            (e.error ? e.error.stack : '')
+          );
+        });
+
         function scaleCanvasToFit() {
           var canvas = document.querySelector('canvas');
           var scale = Math.min(
