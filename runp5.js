@@ -32,7 +32,7 @@ let webpackConfig = {
   ],
   output: {
     path: path.dirname(entryFile),
-    filename: 'bundle.js',
+    filename: 'runp5/bundle.js',
     devtoolModuleFilenameTemplate: function(info) {
       console.log('info:', info);
 
@@ -78,7 +78,7 @@ let webpackConfig = {
   devtool: 'source-map',
   watch: true,
   devServer: {
-    contentBase: __dirname,
+    contentBase: path.resolve(__dirname, 'public'),
   },
 };
 
