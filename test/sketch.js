@@ -8,7 +8,7 @@ let myFunc = function(y) {
 while (game.goToNextFrame()) {
 
   if (myFunc(x) < 100) {
-    console.log(x < 5 || true);
+    console.log(x || true);
   }
 
   game.background(0);

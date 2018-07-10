@@ -18,6 +18,7 @@ if (!isBuild && cli.args.length !== 1) {
 }
 
 let port = 3000;
+let url = 'http://localhost:' + port;
 
 let entryFile = path.resolve(cli.args[0]);
 // TODO: test for entryFile existence here
@@ -27,11 +28,29 @@ let webpackConfig = {
   entry: [
     entryFile,
     path.resolve(__dirname, 'node_modules', 'webpack-dev-server') +
-      '/client?http://localhost:' + port + '/'
+      '/client?' + url
   ],
   output: {
     path: path.dirname(entryFile),
     filename: 'bundle.js',
+    devtoolModuleFilenameTemplate: function(info) {
+      console.log('info:', info);
+
+      let isWebpackInternal = (
+        info.resourcePath.startsWith('(webpack)') ||
+        info.absoluteResourcePath.startsWith('webpack')
+      );
+      let isDevServerNodeModules = (
+        info.absoluteResourcePath.startsWith(__dirname) &&
+        info.resourcePath.includes('/node_modules/')
+      );
+
+      if (isWebpackInternal || isDevServerNodeModules) {
+        return `webpack://${info.namespace}/${info.resourcePath}`;
+      }
+
+      return url + '/' + info.resourcePath.replace(/^\.\//, '');
+    },
   },
   module: {
     rules: [
@@ -76,6 +95,6 @@ if (isBuild) {
   let server = new WebpackDevServer(webpackCompiler, webpackConfig.devServer);
 
   server.listen(port, '127.0.0.1', function() {
-    console.log('Starting server on http://localhost:' + port);
+    console.log('Starting server on ' + url);
   });
 }
