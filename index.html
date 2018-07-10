@@ -30,13 +30,58 @@
     </style>
     <script>
       (function() {
-        window.addEventListener('error', function(e) {
-          alert(
-            'Error in ' + e.filename + ' on line ' + e.lineno + ':\n\n' +
-            'Please open your console to see more information\n\n' +
-            (e.error ? e.error.stack : '')
+        let getErrorInfo = (error) => {
+          if (!(error instanceof Error)) {
+            return {
+              errorType: 'Error',
+              file: null,
+              detailedMessage: 'Error: \n\n' + String(error),
+              error: null,
+            };
+          }
+
+          let stack = error.stack.split('\n');
+          let message = stack[0];
+          let errorType = message.split(':')[0];
+
+          let file = null;
+          for (let i = 0; i < stack.length && file == null; i++) {
+            let match = /([\w\-]+\.js)[^()]* \(\S*?bundle\.js\S*?\)/.exec(stack[i]);
+            if (match) {
+              file = match[1];
+            }
+          }
+
+          let consoleMessage = error.stack.replace(
+            /Object\..\/|\.__runp5\.main|/g,
+            ''
           );
-        });
+
+          return {
+            errorType: errorType,
+            file: file,
+            detailedMessage: consoleMessage,
+            error: error,
+          };
+        };
+
+        let reportError = function(event) {
+          let info = getErrorInfo(event.reason || event.error);
+          if (info.file == null && event.filename != null) {
+            info.file = event.filename;
+          }
+          console.error(info.detailedMessage);
+          event.preventDefault();
+          alert(
+            info.errorType +
+            (info.file != null ? ' in ' + info.file : '') +
+            '\n\n' +
+            'Please open your console to see more information'
+          );
+        };
+
+        window.addEventListener('error', reportError);
+        window.addEventListener('unhandledrejection', reportError);
 
         function scaleCanvasToFit() {
           var canvas = document.querySelector('canvas');
